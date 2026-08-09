@@ -18,6 +18,10 @@ import { DirtySavedViewGuard } from './guards/dirty-saved-view.guard'
 import { PermissionsGuard } from './guards/permissions.guard'
 import { HotKeyService } from './services/hot-key.service'
 import { PermissionsService } from './services/permissions.service'
+import { CorrespondentService } from './services/rest/correspondent.service'
+import { DocumentTypeService } from './services/rest/document-type.service'
+import { StoragePathService } from './services/rest/storage-path.service'
+import { TagService } from './services/rest/tag.service'
 import { SettingsService } from './services/settings.service'
 import { Toast, ToastService } from './services/toast.service'
 import {
@@ -115,6 +119,22 @@ describe('AppComponent', () => {
     fileStatusSubject.next(new FileStatus())
     expect(toastSpy).toHaveBeenCalled()
     expect(toast.action).toBeUndefined()
+  })
+
+  it('should clear cached name lists when document consumption finishes', () => {
+    const clearSpies = [
+      jest.spyOn(TestBed.inject(CorrespondentService), 'clearCache'),
+      jest.spyOn(TestBed.inject(TagService), 'clearCache'),
+      jest.spyOn(TestBed.inject(DocumentTypeService), 'clearCache'),
+      jest.spyOn(TestBed.inject(StoragePathService), 'clearCache'),
+    ]
+    const fileStatusSubject = new Subject<FileStatus>()
+    jest
+      .spyOn(websocketStatusService, 'onDocumentConsumptionFinished')
+      .mockReturnValue(fileStatusSubject)
+    component.ngOnInit()
+    fileStatusSubject.next(new FileStatus())
+    clearSpies.forEach((spy) => expect(spy).toHaveBeenCalled())
   })
 
   it('should display toast on document added', () => {

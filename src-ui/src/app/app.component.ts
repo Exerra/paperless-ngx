@@ -12,6 +12,10 @@ import {
   PermissionsService,
   PermissionType,
 } from './services/permissions.service'
+import { CorrespondentService } from './services/rest/correspondent.service'
+import { DocumentTypeService } from './services/rest/document-type.service'
+import { StoragePathService } from './services/rest/storage-path.service'
+import { TagService } from './services/rest/tag.service'
 import { SettingsService } from './services/settings.service'
 import { TasksService } from './services/tasks.service'
 import { ToastService } from './services/toast.service'
@@ -34,6 +38,10 @@ export class AppComponent implements OnInit, OnDestroy {
   private permissionsService = inject(PermissionsService)
   private hotKeyService = inject(HotKeyService)
   private componentRouterService = inject(ComponentRouterService)
+  private correspondentService = inject(CorrespondentService)
+  private tagService = inject(TagService)
+  private documentTypeService = inject(DocumentTypeService)
+  private storagePathService = inject(StoragePathService)
 
   newDocumentSubscription: Subscription
   successSubscription: Subscription
@@ -80,6 +88,14 @@ export class AppComponent implements OnInit, OnDestroy {
       .onDocumentConsumptionFinished()
       .subscribe((status) => {
         this.tasksService.reload()
+        // Consumption can create new objects server-side (e.g. a
+        // correspondent derived from an email sender or a document
+        // signer), so drop the cached name lists; otherwise the UI
+        // shows the "Private" permission fallback for the new objects.
+        this.correspondentService.clearCache()
+        this.tagService.clearCache()
+        this.documentTypeService.clearCache()
+        this.storagePathService.clearCache()
         if (
           this.showNotification(SETTINGS_KEYS.NOTIFICATIONS_CONSUMER_SUCCESS)
         ) {
